@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מודל העבודה: יצירת וידאו קליפ בעזרת AI</title>
+    <!-- Google Fonts: Rubik for modern Hebrew typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --color-bg-start: #e0f7fa;
+            --color-bg-end: #f3e5f5;
+            --color-text: #2c3e50;
+            --color-step-1: #ff6b6b; /* Red/Pink */
+            --color-step-2: #6c5ce7; /* Purple/Blue */
+            --color-step-3: #fdcb6e; /* Orange */
+            --color-step-4: #00b894; /* Green */
+            --card-bg: rgba(255, 255, 255, 0.95);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Rubik', sans-serif;
+            background: linear-gradient(135deg, #e0f2f1 0%, #e1bee7 100%);
+            color: var(--color-text);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* Header Styling */
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        h1 {
+            font-weight: 900;
+            font-size: 2.5rem;
+            color: #2d3436;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 0px rgba(255,255,255,0.5);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #636e72;
+            font-weight: 500;
+            background: rgba(255,255,255,0.6);
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+        }
+
+        /* Timeline Line */
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            right: 50%; /* Center the line */
+            width: 4px;
+            background: #b2bec3;
+            transform: translateX(50%);
+            border-radius: 2px;
+            z-index: 0;
+        }
+
+        /* Card Steps */
+        .step-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.5);
+            transition: transform 0.3s ease;
+            text-align: center;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .step-card:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Number Badge */
+        .step-number {
+            position: absolute;
+            top: -20px;
+            right: 50%;
+            transform: translateX(50%);
+            width: 40px;
+            height: 40px;
+            background: #2d3436;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border: 4px solid white;
+            z-index: 3;
+        }
+
+        /* Step Colors */
+        .step-1 .step-number { background-color: var(--color-step-1); }
+        .step-1 h2 { color: var(--color-step-1); }
+        .step-1 .icon-box { color: var(--color-step-1); background: rgba(255, 107, 107, 0.1); }
+
+        .step-2 .step-number { background-color: var(--color-step-2); }
+        .step-2 h2 { color: var(--color-step-2); }
+        .step-2 .icon-box { color: var(--color-step-2); background: rgba(108, 92, 231, 0.1); }
+
+        .step-3 .step-number { background-color: var(--color-step-3); }
+        .step-3 h2 { color: #e17055; /* Slightly darker orange for text readability */ }
+        .step-3 .icon-box { color: #e17055; background: rgba(253, 203, 110, 0.1); }
+
+        .step-4 .step-number { background-color: var(--color-step-4); }
+        .step-4 h2 { color: var(--color-step-4); }
+        .step-4 .icon-box { color: var(--color-step-4); background: rgba(0, 184, 148, 0.1); }
+
+        .icon-box {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            font-size: 1.1rem;
+            color: #555;
+        }
+
+        /* Special Layout for Step 2 (Stations) */
+        .comparison-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            text-align: right;
+        }
+
+        .comparison-col {
+            flex: 1;
+            background: rgba(255,255,255,0.5);
+            padding: 1rem;
+            border-radius: 10px;
+            border-top: 4px solid #ccc;
+        }
+
+        .role-student { border-top-color: #0984e3; }
+        .role-ai { border-top-color: #6c5ce7; }
+
+        .role-title {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: block;
+            font-size: 1.1rem;
+        }
+        
+        .role-student .role-title { color: #0984e3; }
+        .role-ai .role-title { color: #6c5ce7; }
+
+        .role-list {
+            font-size: 0.95rem;
+            list-style: none;
+        }
+
+        .role-list li {
+            margin-bottom: 0.3rem;
+            position: relative;
+            padding-right: 15px;
+        }
+        
+        .role-list li::before {
+            content: '•';
+            position: absolute;
+            right: 0;
+            color: inherit;
+        }
+
+        /* Footer Checklist */
+        .footer-checklist {
+            position: fixed;
+            bottom: 20px;
+            left: 20px; /* LTR alignment for fixed element in RTL page visual balance, or right */
+            right: auto;
+            background: white;
+            padding: 1rem 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            z-index: 10;
+            display: none; /* Hidden on mobile by default */
+        }
+        
+        /* Inline footer for layout flow */
+        .inline-checklist {
+            margin-top: 2rem;
+            background: rgba(255,255,255,0.6);
+            padding: 1.5rem;
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 700;
+            color: #2d3436;
+        }
+
+        .check-item i {
+            color: #00b894;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 600px) {
+            h1 { font-size: 1.8rem; }
+            .timeline::before { right: 20px; transform: none; } /* Move line to side */
+            .step-card { 
+                margin-right: 40px; 
+                width: calc(100% - 40px); 
+                text-align: right;
+                padding: 1.5rem;
+            }
+            .step-number { right: -40px; transform: none; top: 20px; }
+            
+            .icon-box { 
+                float: left; 
+                width: 50px; 
+                height: 50px; 
+                font-size: 1.5rem;
+                margin-left: 10px;
+            }
+
+            .comparison-container {
+                flex-direction: column;
+            }
+            
+            .inline-checklist {
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: flex-start;
+            }
+        }
+
+        /* --- Modal Styles (New) --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(45, 52, 54, 0.6); /* Darkened bg */
+            backdrop-filter: blur(8px); /* The Blur Effect */
+            -webkit-backdrop-filter: blur(8px); /* Safari support */
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            padding: 1rem;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-card {
+            background: white;
+            width: 100%;
+            max-width: 700px;
+            border-radius: 20px;
+            padding: 2.5rem;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            max-height: 90vh;
+            overflow-y: auto;
+            text-align: right;
+        }
+
+        .modal-overlay.active .modal-card {
+            transform: scale(1);
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #f1f2f6;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            color: #747d8c;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close-btn:hover {
+            background: #ff6b6b;
+            color: white;
+            transform: rotate(90deg);
+        }
+
+        /* Make main cards interactive */
+        .step-card {
+            cursor: pointer;
+        }
+
+        .click-hint {
+            display: inline-block;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            color: #a4b0be;
+            font-weight: 500;
+            border: 1px solid #dfe6e9;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            transition: all 0.3s;
+        }
+
+        .step-card:hover .click-hint {
+            background: #2d3436;
+            color: white;
+            border-color: #2d3436;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>מפת דרכים בהפקה קולנועית בעידן הבינה המלאכותית בחינוך</h1>
+            <div class="subtitle">למידה מבוססת רגש • תהליך מקצועי • פדגוגיה מנחה</div>
+        </header>
+
+        <div class="timeline">
+            
+            <!-- Step 1 -->
+            <div class="step-card step-1" onclick="openModal('modal-1')">
+                <div class="step-number">1</div>
+                <div class="icon-box">
+                    <i class="fa-solid fa-heart"></i>
+                </div>
+                <h2>קולנוע = רגש</h2>
+                <p>
+                    הסרט מתחיל בחוויה אנושית ורגשית<br>
+                    המורה מנחה – שואל שאלות<br>
+                    AI: השראה, שאלות, דימויים<br>
+                    <span style="font-weight: 700; display: block; margin-top: 0.5rem;">עיקרון: הבינה מסייעת לבינה האנושית ומחדדת אותה.</span>
+                </p>
+                <span class="click-hint"><i class="fa-solid fa-expand"></i> לחץ להרחבה</span>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="step-card step-2" onclick="openModal('modal-2')">
+                <div class="step-number">2</div>
+                <div class="icon-box">
+                    <i class="fa-solid fa-clapperboard"></i>
+                </div>
+                <h2>עשרת התחנות לעשיית סרט</h2>
+                <p style="font-weight: 500; margin-bottom: 1.5rem;">מתודולוגיה מקצועית ללא דילוג על שלבים</p>
+                
+                <div style="text-align: right; background: rgba(255,255,255,0.5); padding: 1.5rem; border-radius: 10px; border-top: 4px solid var(--color-step-2);">
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="margin-bottom: 1rem; position: relative; padding-right: 25px;">
+                            <i class="fa-solid fa-circle-question" style="position: absolute; right: 0; top: 4px; color: var(--color-step-2);"></i>
+                            <strong>כל תחנה מייצרת שאלות לפני החלטות</strong>
+                        </li>
+                        <li style="margin-bottom: 1rem; position: relative; padding-right: 25px;">
+                            <i class="fa-solid fa-users" style="position: absolute; right: 0; top: 4px; color: var(--color-step-2);"></i>
+                            קיום מפגש פיץ' לעיני תלמידי המגמה
+                        </li>
+                        <li style="margin-bottom: 1rem; position: relative; padding-right: 25px;">
+                            <i class="fa-solid fa-chalkboard-user" style="position: absolute; right: 0; top: 4px; color: var(--color-step-2);"></i>
+                            <strong>תפקיד המורה:</strong> מנחה בין התחנות | שואל "למה?"
+                        </li>
+                        <li style="margin-bottom: 0; position: relative; padding-right: 25px;">
+                            <i class="fa-solid fa-wand-magic-sparkles" style="position: absolute; right: 0; top: 4px; color: var(--color-step-2);"></i>
+                            <strong>AI:</strong> העלאת חלופות • חידוד חשיבה (לא מחליף שלב ולא מחליף החלטה) • בדיקת תהליך
+                        </li>
+                    </ul>
+                </div>
+                <span class="click-hint"><i class="fa-solid fa-expand"></i> לחץ להרחבה</span>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="step-card step-3" onclick="openModal('modal-3')">
+                <div class="step-number">3</div>
+                <div class="icon-box">
+                    <i class="fa-solid fa-scale-balanced"></i>
+                </div>
+                <h2>אתיקה בשימוש בבינה מלאכותית</h2>
+                <p>
+                    שקיפות מלאה<br>
+                    לא כל מה שאפשר – ראוי
+                </p>
+                <span class="click-hint"><i class="fa-solid fa-expand"></i> לחץ להרחבה</span>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="step-card step-4" onclick="openModal('modal-4')">
+                <div class="step-number">4</div>
+                <div class="icon-box">
+                    <i class="fa-solid fa-brain"></i>
+                </div>
+                <h2>רפלקציה ובינה אנושית</h2>
+                
+                <div style="text-align: right; background: rgba(255,255,255,0.5); padding: 1.5rem; border-radius: 10px; border-top: 4px solid var(--color-step-4);">
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="margin-bottom: 0.8rem; position: relative; padding-right: 20px;">
+                            <span style="position: absolute; right: 0; color: var(--color-step-4);">•</span>
+                            מה רציתי שהצופה ירגיש?
+                        </li>
+                        <li style="margin-bottom: 0.8rem; position: relative; padding-right: 20px;">
+                            <span style="position: absolute; right: 0; color: var(--color-step-4);">•</span>
+                            אילו בחירות עשיתי – ולמה?
+                        </li>
+                        <li style="margin-bottom: 0.8rem; position: relative; padding-right: 20px;">
+                            <span style="position: absolute; right: 0; color: var(--color-step-4);">•</span>
+                            איפה ה-AI עזר לחשוב?
+                        </li>
+                        <li style="margin-bottom: 0; position: relative; padding-right: 20px;">
+                            <span style="position: absolute; right: 0; color: var(--color-step-4);">•</span>
+                            איפה בחרתי לא להשתמש בו?
+                        </li>
+                    </ul>
+                </div>
+                <span class="click-hint"><i class="fa-solid fa-expand"></i> לחץ להרחבה</span>
+            </div>
+
+        </div>
+
+        <!-- Checkbox Footer -->
+        <div class="inline-checklist" style="flex-direction: column; gap: 1rem;">
+            <h3 style="width: 100%; text-align: center; margin-bottom: 0.5rem; color: #2d3436; font-weight: 900;">סיכום</h3>
+            <div style="display: flex; gap: 2rem; flex-wrap: wrap; justify-content: center;">
+                <div class="check-item"><i class="fa-solid fa-screwdriver-wrench"></i> הבינה היא כלי – לא יוצר</div>
+                <div class="check-item"><i class="fa-solid fa-fingerprint"></i> הקול האישי נשמר</div>
+                <div class="check-item"><i class="fa-solid fa-heart"></i> היצירה נשארת אנושית</div>
+                <div class="check-item"><i class="fa-solid fa-compass"></i> המורה הוא מדריך</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modals -->
+    
+    <!-- Modal 1 -->
+    <div id="modal-1" class="modal-overlay" onclick="closeModal(event, 'modal-1')">
+        <div class="modal-card step-1">
+            <button class="modal-close-btn" onclick="closeModal(event, 'modal-1')"><i class="fa-solid fa-xmark"></i></button>
+            <div class="icon-box">
+                <i class="fa-solid fa-heart"></i>
+            </div>
+            <h2>קולנוע = רגש</h2>
+            <hr style="border: 0; height: 1px; background: #dfe6e9; margin: 1rem 0;">
+            <p style="font-size: 1.2rem; text-align: center; color: #636e72;">
+                כאן יופיע טקסט שמפרט על השלב. תעדכנו כשהטקסטים מוכנים. אין עליכם.
+            </p>
+        </div>
+    </div>
+
+    <!-- Modal 2 -->
+    <div id="modal-2" class="modal-overlay" onclick="closeModal(event, 'modal-2')">
+        <div class="modal-card step-2">
+            <button class="modal-close-btn" onclick="closeModal(event, 'modal-2')"><i class="fa-solid fa-xmark"></i></button>
+            <div class="icon-box">
+                <i class="fa-solid fa-clapperboard"></i>
+            </div>
+            <h2>עשרת התחנות לעשיית סרט</h2>
+            <p class="subtitle" style="background: none; padding: 0; margin-bottom: 1rem;">מתודולוגיה מקצועית ללא דילוג על שלבים</p>
+            <hr style="border: 0; height: 1px; background: #dfe6e9; margin: 1rem 0;">
+            <p style="font-size: 1.2rem; text-align: center; color: #636e72;">
+                כאן יופיע טקסט שמפרט על השלב. תעדכנו כשהטקסטים מוכנים. אין עליכם.
+            </p>
+        </div>
+    </div>
+
+    <!-- Modal 3 -->
+    <div id="modal-3" class="modal-overlay" onclick="closeModal(event, 'modal-3')">
+        <div class="modal-card step-3">
+            <button class="modal-close-btn" onclick="closeModal(event, 'modal-3')"><i class="fa-solid fa-xmark"></i></button>
+            <div class="icon-box">
+                <i class="fa-solid fa-scale-balanced"></i>
+            </div>
+            <h2>אתיקה בשימוש בבינה מלאכותית</h2>
+            <hr style="border: 0; height: 1px; background: #dfe6e9; margin: 1rem 0;">
+            <p style="font-size: 1.2rem; text-align: center; color: #636e72;">
+                כאן יופיע טקסט שמפרט על השלב. תעדכנו כשהטקסטים מוכנים. אין עליכם.
+            </p>
+        </div>
+    </div>
+
+    <!-- Modal 4 -->
+    <div id="modal-4" class="modal-overlay" onclick="closeModal(event, 'modal-4')">
+        <div class="modal-card step-4">
+            <button class="modal-close-btn" onclick="closeModal(event, 'modal-4')"><i class="fa-solid fa-xmark"></i></button>
+            <div class="icon-box">
+                <i class="fa-solid fa-brain"></i>
+            </div>
+            <h2>רפלקציה ובינה אנושית</h2>
+            <hr style="border: 0; height: 1px; background: #dfe6e9; margin: 1rem 0;">
+            <p style="font-size: 1.2rem; text-align: center; color: #636e72;">
+                כאן יופיע טקסט שמפרט על השלב. תעדכנו כשהטקסטים מוכנים. אין עליכם.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden'; // Prevent scrolling
+            }
+        }
+
+        function closeModal(event, modalId) {
+            // Close if clicking overlay or close button (not the card itself if bubbled)
+            if (event.target.classList.contains('modal-overlay') || 
+                event.target.classList.contains('modal-close-btn') || 
+                event.target.closest('.modal-close-btn')) {
+                
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.classList.remove('active');
+                    document.body.style.overflow = ''; // Restore scrolling
+                }
+            }
+        }
+    </script>
+</body>
+</html>
